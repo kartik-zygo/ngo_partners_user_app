@@ -1,0 +1,5 @@
+{
+  "API_BASE_URL": "http://150.241.245.88:8091/api/v1",
+  "SALES_PHONE": "+91 98765 43210",
+  "SALES_EMAIL": "sales@ngopartners.in"
+}
