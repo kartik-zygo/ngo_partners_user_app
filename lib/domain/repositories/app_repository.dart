@@ -3,7 +3,7 @@ import '../entities/collaboration_entity.dart';
 import '../entities/community_entity.dart';
 import '../entities/notification_entity.dart';
 import '../entities/order_entity.dart';
-import '../entities/payment_entity.dart';
+import '../entities/quotation_entity.dart';
 import '../entities/service_entity.dart';
 import '../entities/support_call_entity.dart';
 import '../entities/ticket_entity.dart';
@@ -70,27 +70,26 @@ abstract class AppRepository {
     required String status,
   });
 
-  // Orders
+  // Orders — legacy, read-only since the quotation cutover
   Future<List<OrderEntity>> getOrders({String? status});
-  Future<OrderEntity> createOrder({
-    required String serviceId,
-    String? customerPhone,
-    String? notes,
-  });
   Future<OrderEntity> getOrder(String orderId);
-  Future<PaymentInstructions> getPaymentInstructions();
-  Future<PaymentRequestEntity> submitPaymentRequest({
-    required String orderId,
-    required String paymentMethod,
-    required String referenceNumber,
-    required double amountPaid,
-    DateTime? paidAt,
-    String? payerName,
-    String? payerNote,
-    String? proofFilePath,
-  });
-  Future<PaymentRequestEntity> getPaymentRequest(String requestId);
   Future<OrderEntity> cancelOrder(String orderId, {String? reason});
+
+  // Quotations
+  Future<QuotationEntity> createQuotation({
+    required String serviceId,
+    required String name,
+    required String email,
+    required String phone,
+    String? organizationName,
+    String? message,
+  });
+  Future<List<QuotationEntity>> getQuotations({
+    String? status,
+    int page,
+    int limit,
+  });
+  Future<QuotationEntity> getQuotationById(String id);
 
   // Community Hub
   Future<CommunityFeed> getCommunityPosts({

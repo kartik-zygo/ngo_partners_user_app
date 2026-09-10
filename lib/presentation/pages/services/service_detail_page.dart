@@ -8,7 +8,7 @@ import '../../../domain/entities/service_entity.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../../domain/usecases/app_usecases.dart';
 import '../support/agora_call_page.dart';
-import 'service_payment_page.dart';
+import 'quotation_request_page.dart';
 
 class ServiceDetailPage extends StatefulWidget {
   final ServiceEntity service;
@@ -249,11 +249,11 @@ class _ServiceDetailPageState extends State<ServiceDetailPage>
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.currency_rupee_rounded, color: AppColors.gold, size: 14),
+                                    const Icon(Icons.request_quote_outlined,
+                                        color: AppColors.gold, size: 14),
+                                    const SizedBox(width: 5),
                                     Text(
-                                      widget.service.pricingLabel.isNotEmpty
-                                          ? widget.service.pricingLabel
-                                          : 'Custom Quote',
+                                      widget.service.pricingLabel,
                                       style: AppTextStyles.titleMedium.copyWith(
                                         color: AppColors.gold,
                                         fontWeight: FontWeight.w700,
@@ -595,12 +595,6 @@ class _ServiceDetailPageState extends State<ServiceDetailPage>
 
   // ── Bottom CTA ──────────────────────────────────────────────────────────────
   Widget _buildCTA(BuildContext context) {
-    final purchasable = widget.service.purchasable;
-    final priceDisplay = widget.service.pricingLabel.isNotEmpty
-        ? widget.service.pricingLabel
-        : purchasable
-            ? '₹${widget.service.price}'
-            : 'Contact for pricing';
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       decoration: BoxDecoration(
@@ -618,7 +612,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Pricing note
+            // Pricing note — quote-only, no rate is ever shown to a client
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -636,31 +630,29 @@ class _ServiceDetailPageState extends State<ServiceDetailPage>
                   const Icon(Icons.local_offer_rounded, color: AppColors.primary, size: 16),
                   const SizedBox(width: 8),
                   Text(
-                    priceDisplay,
+                    widget.service.pricingLabel,
                     style: AppTextStyles.titleMedium.copyWith(color: AppColors.primary),
                   ),
                   const Spacer(),
                   Text(
-                    purchasable ? 'Fixed price' : 'Get free quote',
+                    'Shared on a call',
                     style: AppTextStyles.caption.copyWith(color: AppColors.secondary),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 10),
-            // Primary CTA — Buy Now when purchasable, else Consultation
+            // Primary CTA — every service is quote-only now
             GestureDetector(
-              onTap: purchasable
-                  ? () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ServicePaymentPage(
-                            service: widget.service,
-                            user: widget.user,
-                          ),
-                        ),
-                      )
-                  : () => _showContactSheet(context),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => QuotationRequestPage(
+                    service: widget.service,
+                    user: widget.user,
+                  ),
+                ),
+              ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -681,38 +673,28 @@ class _ServiceDetailPageState extends State<ServiceDetailPage>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      purchasable
-                          ? Icons.receipt_long_rounded
-                          : Icons.headset_mic_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    const Icon(Icons.request_quote_rounded,
+                        color: Colors.white, size: 18),
                     const SizedBox(width: 8),
                     Text(
-                      purchasable
-                          ? 'Order for $priceDisplay'
-                          : 'Get Free Consultation',
+                      'Get Quotation',
                       style: AppTextStyles.buttonText.copyWith(fontSize: 15),
                     ),
                   ],
                 ),
               ),
             ),
-            // Secondary link — show consultation when purchasable
-            if (purchasable) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => _showContactSheet(context),
-                child: Text(
-                  'Have questions? Get free consultation',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.primary,
-                    decoration: TextDecoration.underline,
-                  ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => _showContactSheet(context),
+              child: Text(
+                'Have questions? Talk to us first',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  decoration: TextDecoration.underline,
                 ),
               ),
-            ],
+            ),
             const SizedBox(height: 6),
           ],
         ),

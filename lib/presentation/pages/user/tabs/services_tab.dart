@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../domain/entities/service_entity.dart';
@@ -200,7 +199,7 @@ class _FeaturedBanner extends StatelessWidget {
               border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
             ),
             child: Text(
-              'From ₹${AppConstants.basePriceOnwards} onwards',
+              'Pricing on request',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.secondary,
                 fontWeight: FontWeight.w700,

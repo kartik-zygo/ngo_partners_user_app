@@ -11,6 +11,7 @@ import '../profile/about_app_page.dart';
 import '../profile/edit_profile_page.dart';
 import '../profile/help_faq_page.dart';
 import '../profile/my_orders_page.dart';
+import '../profile/my_quotations_page.dart';
 import '../profile/notification_settings_page.dart';
 import '../profile/security_privacy_page.dart';
 import '../../../blocs/app/app_blocs.dart';
@@ -242,9 +243,15 @@ class ProfileTab extends StatelessWidget {
         () => _openPage(context, EditProfilePage(user: user)),
       ),
       _MenuItem(
-        Icons.receipt_long_rounded,
-        'My Orders',
+        Icons.request_quote_rounded,
+        'My Quotations',
         AppColors.primary,
+        () => _openPage(context, const MyQuotationsPage()),
+      ),
+      _MenuItem(
+        Icons.receipt_long_rounded,
+        'Order History',
+        AppColors.textSecondary,
         () => _openPage(context, const MyOrdersPage()),
       ),
       _MenuItem(

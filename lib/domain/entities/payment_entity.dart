@@ -1,54 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-class PaymentInstructions extends Equatable {
-  final String? accountName;
-  final String? accountNumber;
-  final String? ifsc;
-  final String? bankName;
-  final String? branch;
-  final String? upiId;
-  final String? qrImageUrl;
-  final String? supportContact;
-  final String instructions;
-
-  const PaymentInstructions({
-    this.accountName,
-    this.accountNumber,
-    this.ifsc,
-    this.bankName,
-    this.branch,
-    this.upiId,
-    this.qrImageUrl,
-    this.supportContact,
-    this.instructions = '',
-  });
-
-  factory PaymentInstructions.fromJson(Map<String, dynamic> json) {
-    return PaymentInstructions(
-      accountName: json['accountName'] as String?,
-      accountNumber: json['accountNumber'] as String?,
-      ifsc: json['ifsc'] as String?,
-      bankName: json['bankName'] as String?,
-      branch: json['branch'] as String?,
-      upiId: json['upiId'] as String?,
-      qrImageUrl: json['qrImageUrl'] as String?,
-      supportContact: json['supportContact'] as String?,
-      instructions: json['instructions'] as String? ?? '',
-    );
-  }
-
-  bool get hasBankDetails =>
-      (accountNumber != null && accountNumber!.isNotEmpty) ||
-      (ifsc != null && ifsc!.isNotEmpty);
-
-  bool get hasUpi => upiId != null && upiId!.isNotEmpty;
-
-  bool get isEmpty => !hasBankDetails && !hasUpi;
-
-  @override
-  List<Object?> get props => [accountNumber, ifsc, upiId, instructions];
-}
-
 enum PaymentMethod {
   upi,
   bankTransfer,

@@ -5,8 +5,9 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../domain/entities/order_entity.dart';
 import '../../../../domain/usecases/app_usecases.dart';
-import '../../../pages/services/order_payment_page.dart';
 
+/// Read-only history of orders placed before the quotation cutover. Orders can
+/// no longer be created or paid from the app.
 class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
 
@@ -54,7 +55,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     return Scaffold(
       backgroundColor: AppColors.bgDark,
       appBar: AppBar(
-        title: const Text('My Orders'),
+        title: const Text('Order History'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -62,6 +63,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
       ),
       body: Column(
         children: [
+          const _LegacyNotice(),
           _FilterBar(active: _activeFilter, onSelect: _applyFilter),
           Expanded(child: _buildBody()),
         ],
@@ -198,12 +200,7 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => OrderPaymentPage(order: order)),
-      ),
-      child: Container(
+    return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -285,29 +282,20 @@ class _OrderCard extends StatelessWidget {
                     child: const Icon(Icons.sticky_note_2_outlined,
                         size: 16, color: AppColors.textMuted),
                   ),
-                const SizedBox(width: 6),
-                const Icon(Icons.chevron_right_rounded,
-                    size: 18, color: AppColors.textMuted),
               ],
             ),
             if (order.canSubmitPayment) ...[
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Icon(
-                    order.isRejected
-                        ? Icons.replay_rounded
-                        : Icons.account_balance_rounded,
-                    size: 14,
-                    color: AppColors.primary,
-                  ),
+                  const Icon(Icons.support_agent_rounded,
+                      size: 14, color: AppColors.textSecondary),
                   const SizedBox(width: 6),
-                  Text(
-                    order.isRejected
-                        ? 'Tap to submit your payment again'
-                        : 'Tap to view payment details',
-                    style: AppTextStyles.caption
-                        .copyWith(color: AppColors.primary),
+                  Expanded(
+                    child: Text(
+                      'Contact our sales team to settle this order.',
+                      style: AppTextStyles.caption,
+                    ),
                   ),
                 ],
               ),
@@ -315,6 +303,41 @@ class _OrderCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Legacy notice ─────────────────────────────────────────────────────────────
+class _LegacyNotice extends StatelessWidget {
+  const _LegacyNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.infoBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.history_rounded, size: 16, color: AppColors.info),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Past orders only. New services now start with a quotation '
+                'request handled by our sales team.',
+                style: AppTextStyles.caption,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -377,10 +400,10 @@ class _EmptyState extends StatelessWidget {
                   color: AppColors.textMuted, size: 40),
             ),
             const SizedBox(height: 20),
-            Text('No orders yet', style: AppTextStyles.headlineSmall),
+            Text('No past orders', style: AppTextStyles.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Services you order will appear here.',
+              'Orders placed before the quotation flow would appear here.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),

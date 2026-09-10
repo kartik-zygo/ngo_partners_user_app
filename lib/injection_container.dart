@@ -11,6 +11,7 @@ import 'domain/usecases/auth_usecases.dart';
 import 'presentation/blocs/app/app_blocs.dart';
 import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/community/community_bloc.dart';
+import 'presentation/blocs/quotations/quotations_bloc.dart';
 import 'presentation/blocs/services/services_bloc.dart';
 
 final sl = GetIt.instance;
@@ -56,12 +57,11 @@ void setupInjection() {
   sl.registerFactory(() => GetAgoraTokenUseCase(sl()));
   sl.registerFactory(() => UpdateCallStatusUseCase(sl()));
   sl.registerFactory(() => GetOrdersUseCase(sl()));
-  sl.registerFactory(() => CreateOrderUseCase(sl()));
   sl.registerFactory(() => GetOrderUseCase(sl()));
-  sl.registerFactory(() => GetPaymentInstructionsUseCase(sl()));
-  sl.registerFactory(() => SubmitPaymentRequestUseCase(sl()));
-  sl.registerFactory(() => GetPaymentRequestUseCase(sl()));
   sl.registerFactory(() => CancelOrderUseCase(sl()));
+  sl.registerFactory(() => CreateQuotationUseCase(sl()));
+  sl.registerFactory(() => GetQuotationsUseCase(sl()));
+  sl.registerFactory(() => GetQuotationByIdUseCase(sl()));
   sl.registerFactory(() => GetCommunityPostsUseCase(sl()));
   sl.registerFactory(() => GetCommunityPostUseCase(sl()));
   sl.registerFactory(() => CreateCommunityPostUseCase(sl()));
@@ -109,6 +109,12 @@ void setupInjection() {
       getTickets: sl(),
       createTicket: sl(),
       addTicketReply: sl(),
+    ),
+  );
+  sl.registerFactory(
+    () => QuotationsBloc(
+      createQuotation: sl(),
+      getQuotations: sl(),
     ),
   );
   sl.registerFactory(

@@ -24,6 +24,10 @@ class SocketService {
   final StreamController<Map<String, dynamic>> _paymentRejectedController =
       StreamController<Map<String, dynamic>>.broadcast();
 
+  final StreamController<Map<String, dynamic>>
+      _quotationStatusChangedController =
+      StreamController<Map<String, dynamic>>.broadcast();
+
   /// Emits whenever the server pushes a `call:status-changed` event.
   Stream<Map<String, dynamic>> get callStatusStream =>
       _callStatusController.stream;
@@ -36,6 +40,11 @@ class SocketService {
 
   Stream<Map<String, dynamic>> get paymentRejectedStream =>
       _paymentRejectedController.stream;
+
+  /// `quotation:statusChanged` — pushed into this client's own room whenever
+  /// their request moves along the pipeline.
+  Stream<Map<String, dynamic>> get quotationStatusChangedStream =>
+      _quotationStatusChangedController.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -92,9 +101,16 @@ class SocketService {
       if (map != null) _paymentApprovedController.add(map);
     });
 
+    // Legacy orders only — these no longer fire for new business.
     _socket!.on('order:paymentRejected', (data) {
       final map = _toMap(data);
       if (map != null) _paymentRejectedController.add(map);
+    });
+
+    _socket!.on('quotation:statusChanged', (data) {
+      debugPrint('[Socket] quotation:statusChanged raw: $data');
+      final map = _toMap(data);
+      if (map != null) _quotationStatusChangedController.add(map);
     });
 
     _socket!.connect();

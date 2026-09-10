@@ -7,7 +7,7 @@ import '../../domain/entities/collaboration_entity.dart';
 import '../../domain/entities/community_entity.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/entities/order_entity.dart';
-import '../../domain/entities/payment_entity.dart';
+import '../../domain/entities/quotation_entity.dart';
 import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/support_call_entity.dart';
 import '../../domain/entities/ticket_entity.dart';
@@ -154,57 +154,50 @@ class AppRepositoryImpl implements AppRepository {
   }) =>
       _remote.updateCallStatus(callId: callId, status: status);
 
-  // ── Orders ───────────────────────────────────────────────────────────────
+  // ── Orders (legacy) ──────────────────────────────────────────────────────
 
   @override
   Future<List<OrderEntity>> getOrders({String? status}) =>
       _remote.getOrders(status: status);
 
   @override
-  Future<OrderEntity> createOrder({
-    required String serviceId,
-    String? customerPhone,
-    String? notes,
-  }) =>
-      _remote.createOrder(
-          serviceId: serviceId, customerPhone: customerPhone, notes: notes);
-
-  @override
   Future<OrderEntity> getOrder(String orderId) => _remote.getOrder(orderId);
-
-  @override
-  Future<PaymentInstructions> getPaymentInstructions() =>
-      _remote.getPaymentInstructions();
-
-  @override
-  Future<PaymentRequestEntity> submitPaymentRequest({
-    required String orderId,
-    required String paymentMethod,
-    required String referenceNumber,
-    required double amountPaid,
-    DateTime? paidAt,
-    String? payerName,
-    String? payerNote,
-    String? proofFilePath,
-  }) =>
-      _remote.submitPaymentRequest(
-        orderId: orderId,
-        paymentMethod: paymentMethod,
-        referenceNumber: referenceNumber,
-        amountPaid: amountPaid,
-        paidAt: paidAt,
-        payerName: payerName,
-        payerNote: payerNote,
-        proofFilePath: proofFilePath,
-      );
-
-  @override
-  Future<PaymentRequestEntity> getPaymentRequest(String requestId) =>
-      _remote.getPaymentRequest(requestId);
 
   @override
   Future<OrderEntity> cancelOrder(String orderId, {String? reason}) =>
       _remote.cancelOrder(orderId, reason: reason);
+
+  // ── Quotations ───────────────────────────────────────────────────────────
+
+  @override
+  Future<QuotationEntity> createQuotation({
+    required String serviceId,
+    required String name,
+    required String email,
+    required String phone,
+    String? organizationName,
+    String? message,
+  }) =>
+      _remote.createQuotation(
+        serviceId: serviceId,
+        name: name,
+        email: email,
+        phone: phone,
+        organizationName: organizationName,
+        message: message,
+      );
+
+  @override
+  Future<List<QuotationEntity>> getQuotations({
+    String? status,
+    int page = 1,
+    int limit = 20,
+  }) =>
+      _remote.getQuotations(status: status, page: page, limit: limit);
+
+  @override
+  Future<QuotationEntity> getQuotationById(String id) =>
+      _remote.getQuotationById(id);
 
   // ── Community Hub ──────────────────────────────────────────────────────────
 

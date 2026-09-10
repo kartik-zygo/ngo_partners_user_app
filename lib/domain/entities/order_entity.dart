@@ -16,7 +16,6 @@ class OrderEntity extends Equatable {
   final String? customerPhone;
   final String? latestPaymentRequestId;
   final String? latestPaymentRequestStatus;
-  final PaymentInstructions? paymentInstructions;
   final List<PaymentRequestEntity> paymentRequests;
   final DateTime? paidAt;
   final DateTime? createdAt;
@@ -35,14 +34,12 @@ class OrderEntity extends Equatable {
     this.customerPhone,
     this.latestPaymentRequestId,
     this.latestPaymentRequestStatus,
-    this.paymentInstructions,
     this.paymentRequests = const [],
     this.paidAt,
     this.createdAt,
   });
 
   factory OrderEntity.fromJson(Map<String, dynamic> json) {
-    final instructions = json['paymentInstructions'];
     final requests = json['paymentRequests'];
 
     return OrderEntity(
@@ -59,9 +56,6 @@ class OrderEntity extends Equatable {
       customerPhone: json['customerPhone'] as String?,
       latestPaymentRequestId: json['latestPaymentRequestId'] as String?,
       latestPaymentRequestStatus: json['latestPaymentRequestStatus'] as String?,
-      paymentInstructions: instructions is Map<String, dynamic>
-          ? PaymentInstructions.fromJson(instructions)
-          : null,
       paymentRequests: requests is List
           ? requests
               .whereType<Map<String, dynamic>>()
@@ -83,7 +77,6 @@ class OrderEntity extends Equatable {
     String? fulfillmentStatus,
     String? latestPaymentRequestId,
     String? latestPaymentRequestStatus,
-    PaymentInstructions? paymentInstructions,
     List<PaymentRequestEntity>? paymentRequests,
     DateTime? paidAt,
   }) {
@@ -103,7 +96,6 @@ class OrderEntity extends Equatable {
           latestPaymentRequestId ?? this.latestPaymentRequestId,
       latestPaymentRequestStatus:
           latestPaymentRequestStatus ?? this.latestPaymentRequestStatus,
-      paymentInstructions: paymentInstructions ?? this.paymentInstructions,
       paymentRequests: paymentRequests ?? this.paymentRequests,
       paidAt: paidAt ?? this.paidAt,
       createdAt: createdAt,

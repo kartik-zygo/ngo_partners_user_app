@@ -3,7 +3,7 @@ import '../entities/collaboration_entity.dart';
 import '../entities/community_entity.dart';
 import '../entities/notification_entity.dart';
 import '../entities/order_entity.dart';
-import '../entities/payment_entity.dart';
+import '../entities/quotation_entity.dart';
 import '../entities/service_entity.dart';
 import '../entities/support_call_entity.dart';
 import '../entities/ticket_entity.dart';
@@ -183,7 +183,7 @@ class UpdateCallStatusUseCase {
       _repo.updateCallStatus(callId: callId, status: status);
 }
 
-// ── Orders ────────────────────────────────────────────────────────────────────
+// ── Orders (legacy) ───────────────────────────────────────────────────────────
 
 class GetOrdersUseCase {
   final AppRepository _repo;
@@ -192,60 +192,10 @@ class GetOrdersUseCase {
       _repo.getOrders(status: status);
 }
 
-class CreateOrderUseCase {
-  final AppRepository _repo;
-  CreateOrderUseCase(this._repo);
-  Future<OrderEntity> call({
-    required String serviceId,
-    String? customerPhone,
-    String? notes,
-  }) =>
-      _repo.createOrder(
-          serviceId: serviceId, customerPhone: customerPhone, notes: notes);
-}
-
 class GetOrderUseCase {
   final AppRepository _repo;
   GetOrderUseCase(this._repo);
   Future<OrderEntity> call(String orderId) => _repo.getOrder(orderId);
-}
-
-class GetPaymentInstructionsUseCase {
-  final AppRepository _repo;
-  GetPaymentInstructionsUseCase(this._repo);
-  Future<PaymentInstructions> call() => _repo.getPaymentInstructions();
-}
-
-class SubmitPaymentRequestUseCase {
-  final AppRepository _repo;
-  SubmitPaymentRequestUseCase(this._repo);
-  Future<PaymentRequestEntity> call({
-    required String orderId,
-    required String paymentMethod,
-    required String referenceNumber,
-    required double amountPaid,
-    DateTime? paidAt,
-    String? payerName,
-    String? payerNote,
-    String? proofFilePath,
-  }) =>
-      _repo.submitPaymentRequest(
-        orderId: orderId,
-        paymentMethod: paymentMethod,
-        referenceNumber: referenceNumber,
-        amountPaid: amountPaid,
-        paidAt: paidAt,
-        payerName: payerName,
-        payerNote: payerNote,
-        proofFilePath: proofFilePath,
-      );
-}
-
-class GetPaymentRequestUseCase {
-  final AppRepository _repo;
-  GetPaymentRequestUseCase(this._repo);
-  Future<PaymentRequestEntity> call(String requestId) =>
-      _repo.getPaymentRequest(requestId);
 }
 
 class CancelOrderUseCase {
@@ -253,6 +203,46 @@ class CancelOrderUseCase {
   CancelOrderUseCase(this._repo);
   Future<OrderEntity> call(String orderId, {String? reason}) =>
       _repo.cancelOrder(orderId, reason: reason);
+}
+
+// ── Quotations ────────────────────────────────────────────────────────────────
+
+class CreateQuotationUseCase {
+  final AppRepository _repo;
+  CreateQuotationUseCase(this._repo);
+  Future<QuotationEntity> call({
+    required String serviceId,
+    required String name,
+    required String email,
+    required String phone,
+    String? organizationName,
+    String? message,
+  }) =>
+      _repo.createQuotation(
+        serviceId: serviceId,
+        name: name,
+        email: email,
+        phone: phone,
+        organizationName: organizationName,
+        message: message,
+      );
+}
+
+class GetQuotationsUseCase {
+  final AppRepository _repo;
+  GetQuotationsUseCase(this._repo);
+  Future<List<QuotationEntity>> call({
+    String? status,
+    int page = 1,
+    int limit = 20,
+  }) =>
+      _repo.getQuotations(status: status, page: page, limit: limit);
+}
+
+class GetQuotationByIdUseCase {
+  final AppRepository _repo;
+  GetQuotationByIdUseCase(this._repo);
+  Future<QuotationEntity> call(String id) => _repo.getQuotationById(id);
 }
 
 // ── Community Hub ───────────────────────────────────────────────────────────────

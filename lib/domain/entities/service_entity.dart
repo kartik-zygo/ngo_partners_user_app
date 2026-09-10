@@ -2,12 +2,18 @@ import 'package:equatable/equatable.dart';
 
 enum ServiceCategory { ngo, compliance, business }
 
+/// Shown wherever a rate used to be. The backend sends the same constant, but
+/// older builds of the API (and the offline mock data) may omit it entirely.
+const String kPricingOnRequestLabel = 'Pricing on request';
+
 class ServiceEntity extends Equatable {
   final String id;
   final String name;
-  final int price;
   final String pricingLabel;
-  final bool purchasable;
+
+  /// Always true since the quotation cutover — services are quote-only and
+  /// carry no client-visible rate.
+  final bool quotationRequired;
   final String status;
   final ServiceCategory category;
   final String? description;
@@ -17,9 +23,8 @@ class ServiceEntity extends Equatable {
   const ServiceEntity({
     required this.id,
     required this.name,
-    required this.price,
-    required this.pricingLabel,
-    required this.purchasable,
+    this.pricingLabel = kPricingOnRequestLabel,
+    this.quotationRequired = true,
     required this.status,
     required this.category,
     this.description,
@@ -28,12 +33,13 @@ class ServiceEntity extends Equatable {
   });
 
   factory ServiceEntity.fromJson(Map<String, dynamic> json) {
+    final label = json['pricingLabel'] as String?;
     return ServiceEntity(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
-      price: (json['basePrice'] as num?)?.toInt() ?? 0,
-      pricingLabel: json['pricingLabel'] as String? ?? '',
-      purchasable: json['purchasable'] as bool? ?? (json['basePrice'] != null),
+      pricingLabel:
+          (label == null || label.isEmpty) ? kPricingOnRequestLabel : label,
+      quotationRequired: json['quotationRequired'] as bool? ?? true,
       status: (json['isActive'] as bool? ?? true) ? 'approved' : 'pending',
       category: _parseCategory(json['category'] as String?),
       description: json['description'] as String?,
@@ -68,5 +74,5 @@ class ServiceEntity extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, price, pricingLabel, purchasable];
+  List<Object?> get props => [id, name, pricingLabel, quotationRequired];
 }

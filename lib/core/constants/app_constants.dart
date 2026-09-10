@@ -24,5 +24,4 @@ class AppConstants {
     defaultValue: 'sales@ngopartners.in',
   );
   static const String salesAvailability = 'Mon–Sat, 9AM–7PM';
-  static const int basePriceOnwards = 500;
 }

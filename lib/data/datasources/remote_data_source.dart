@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:mime/mime.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/network/dio_client.dart';
 import '../../domain/entities/case_entity.dart';
@@ -10,7 +9,7 @@ import '../../domain/entities/service_entity.dart';
 import '../../domain/entities/support_call_entity.dart';
 import '../../domain/entities/ticket_entity.dart';
 import '../../domain/entities/order_entity.dart';
-import '../../domain/entities/payment_entity.dart';
+import '../../domain/entities/quotation_entity.dart';
 import '../../domain/entities/user_entity.dart';
 
 class RemoteDataSource {
@@ -451,7 +450,9 @@ class RemoteDataSource {
     }
   }
 
-  // ── Orders ────────────────────────────────────────────────────────────────
+  // ── Orders (legacy) ───────────────────────────────────────────────────────
+  // Read-only since the quotation cutover. Orders can no longer be placed or
+  // paid from the app; these only settle what was already in flight.
 
   Future<List<OrderEntity>> getOrders({
     String? status,
@@ -473,98 +474,10 @@ class RemoteDataSource {
     }
   }
 
-  Future<OrderEntity> createOrder({
-    required String serviceId,
-    String? customerPhone,
-    String? notes,
-  }) async {
-    try {
-      final res = await _dio.post('/orders', data: {
-        'serviceId': serviceId,
-        if (customerPhone != null && customerPhone.isNotEmpty)
-          'customerPhone': customerPhone,
-        if (notes != null && notes.isNotEmpty) 'notes': notes,
-      });
-      return OrderEntity.fromJson(res.data['data'] as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw Exception(_client.extractErrorMessage(e));
-    }
-  }
-
   Future<OrderEntity> getOrder(String orderId) async {
     try {
       final res = await _dio.get('/orders/$orderId');
       return OrderEntity.fromJson(res.data['data'] as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw Exception(_client.extractErrorMessage(e));
-    }
-  }
-
-  Future<PaymentInstructions> getPaymentInstructions() async {
-    try {
-      final res = await _dio.get('/orders/payment-instructions');
-      return PaymentInstructions.fromJson(
-          res.data['data'] as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw Exception(_client.extractErrorMessage(e));
-    }
-  }
-
-  Future<PaymentRequestEntity> submitPaymentRequest({
-    required String orderId,
-    required String paymentMethod,
-    required String referenceNumber,
-    required double amountPaid,
-    DateTime? paidAt,
-    String? payerName,
-    String? payerNote,
-    String? proofFilePath,
-  }) async {
-    try {
-      final Object body;
-      if (proofFilePath != null && proofFilePath.isNotEmpty) {
-        final fileName = proofFilePath.split(RegExp(r'[/\\]')).last;
-        final mimeType = lookupMimeType(proofFilePath) ?? 'image/jpeg';
-        body = FormData.fromMap({
-          'paymentMethod': paymentMethod,
-          'referenceNumber': referenceNumber,
-          'amountPaid': amountPaid.toString(),
-          if (paidAt != null) 'paidAt': _isoWithOffset(paidAt),
-          if (payerName != null && payerName.isNotEmpty) 'payerName': payerName,
-          if (payerNote != null && payerNote.isNotEmpty) 'payerNote': payerNote,
-          'proofFile': await MultipartFile.fromFile(
-            proofFilePath,
-            filename: fileName,
-            contentType: DioMediaType.parse(mimeType),
-          ),
-        });
-      } else {
-        body = {
-          'paymentMethod': paymentMethod,
-          'referenceNumber': referenceNumber,
-          'amountPaid': amountPaid,
-          if (paidAt != null) 'paidAt': _isoWithOffset(paidAt),
-          if (payerName != null && payerName.isNotEmpty) 'payerName': payerName,
-          if (payerNote != null && payerNote.isNotEmpty) 'payerNote': payerNote,
-        };
-      }
-
-      final res = await _dio.post(
-        '/orders/$orderId/payment-requests',
-        data: body,
-      );
-      return PaymentRequestEntity.fromJson(
-          res.data['data'] as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw Exception(_client.extractErrorMessage(e));
-    }
-  }
-
-  Future<PaymentRequestEntity> getPaymentRequest(String requestId) async {
-    try {
-      final res = await _dio.get('/orders/payment-requests/$requestId');
-      return PaymentRequestEntity.fromJson(
-          res.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {
       throw Exception(_client.extractErrorMessage(e));
     }
@@ -582,15 +495,142 @@ class RemoteDataSource {
     }
   }
 
-  String _isoWithOffset(DateTime dt) {
-    final local = dt.toLocal();
-    final offset = local.timeZoneOffset;
-    final sign = offset.isNegative ? '-' : '+';
-    final abs = offset.abs();
-    final hh = abs.inHours.toString().padLeft(2, '0');
-    final mm = (abs.inMinutes % 60).toString().padLeft(2, '0');
-    final base = local.toIso8601String().split('.').first;
-    return '$base$sign$hh:$mm';
+  // ── Quotations ────────────────────────────────────────────────────────────
+
+  Future<QuotationEntity> createQuotation({
+    required String serviceId,
+    required String name,
+    required String email,
+    required String phone,
+    String? organizationName,
+    String? message,
+  }) async {
+    try {
+      final res = await _dio.post('/quotations', data: {
+        'serviceId': serviceId,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        if (organizationName != null && organizationName.isNotEmpty)
+          'organizationName': organizationName,
+        if (message != null && message.isNotEmpty) 'message': message,
+      });
+      return QuotationEntity.fromJson(
+          res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _quotationSubmitError(e);
+    }
+  }
+
+  Future<List<QuotationEntity>> getQuotations({
+    String? status,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final res = await _dio.get('/quotations', queryParameters: {
+        'page': page,
+        'limit': limit,
+        if (status != null && status.isNotEmpty) 'status': status,
+      });
+      final list = res.data['data'] as List<dynamic>;
+      return list
+          .map((e) => QuotationEntity.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
+  Future<QuotationEntity> getQuotationById(String id) async {
+    try {
+      final res = await _dio.get('/quotations/$id');
+      return QuotationEntity.fromJson(
+          res.data['data'] as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
+  /// Turns the documented submit failures into the typed exceptions the
+  /// quotation screens branch on. Anything else stays a plain [Exception].
+  Exception _quotationSubmitError(DioException e) {
+    final status = e.response?.statusCode;
+    final message = _client.extractErrorMessage(e);
+    final error = _errorBody(e);
+    final details = error?['details'];
+
+    if (status == 409) {
+      return QuotationAlreadyOpenException(
+        message,
+        reference: _referenceFrom(details, e.response?.data) ??
+            _referenceFrom(null, message),
+      );
+    }
+    if (status == 422) {
+      return QuotationValidationException(
+        message,
+        fieldErrors: _fieldErrors(details),
+      );
+    }
+    if (status == 404) {
+      return QuotationServiceUnavailableException(message);
+    }
+    return Exception(message);
+  }
+
+  Map<String, dynamic>? _errorBody(DioException e) {
+    final data = e.response?.data;
+    if (data is Map && data['error'] is Map) {
+      return Map<String, dynamic>.from(data['error'] as Map);
+    }
+    return null;
+  }
+
+  /// `QR-2609-D5D6A4`. The backend may return it as a field or only inside the
+  /// message, so both are worth a look before giving up.
+  String? _referenceFrom(dynamic details, dynamic fallback) {
+    if (details is Map) {
+      for (final key in const ['reference', 'existingReference', 'quotationReference']) {
+        final value = details[key];
+        if (value is String && value.isNotEmpty) return value;
+      }
+    }
+    if (fallback is Map) {
+      final data = fallback['data'];
+      if (data is Map && data['reference'] is String) {
+        return data['reference'] as String;
+      }
+    }
+    if (fallback is String) {
+      final match = RegExp(r'QR-[A-Z0-9]+-[A-Z0-9]+').firstMatch(fallback);
+      if (match != null) return match.group(0);
+    }
+    return null;
+  }
+
+  /// `details` arrives either as `[{field, message}, …]` or as a plain map of
+  /// field → message depending on the validator that rejected the body.
+  Map<String, String> _fieldErrors(dynamic details) {
+    final result = <String, String>{};
+    if (details is List) {
+      for (final entry in details) {
+        if (entry is! Map) continue;
+        final field = (entry['field'] ?? entry['path'] ?? entry['param'])
+            ?.toString();
+        final message = (entry['message'] ?? entry['msg'])?.toString();
+        if (field != null && message != null) result[field] = message;
+      }
+    } else if (details is Map) {
+      details.forEach((key, value) {
+        if (value is String) {
+          result[key.toString()] = value;
+        } else if (value is List && value.isNotEmpty) {
+          result[key.toString()] = value.first.toString();
+        }
+      });
+    }
+    return result;
   }
 
   // ── Integration ───────────────────────────────────────────────────────────
