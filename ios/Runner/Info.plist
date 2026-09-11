@@ -52,23 +52,6 @@
 		<string>tel</string>
 		<string>mailto</string>
 	</array>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<false/>
-		<key>NSExceptionDomains</key>
-		<dict>
-			<key>150.241.245.88</key>
-			<dict>
-				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSIncludesSubdomains</key>
-				<true/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.2</string>
-			</dict>
-		</dict>
-	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs microphone access for voice and video calls with our support team.</string>
 	<key>NSCameraUsageDescription</key>

@@ -57,7 +57,7 @@ class SocketService {
       AppConstants.socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
-          .setPath('/socket.io')
+          .setPath(AppConstants.socketPath)
           .setAuth({'token': accessToken})
           .disableAutoConnect()
           .enableReconnection()
