@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../domain/entities/ticket_entity.dart';
 import '../../../../domain/usecases/app_usecases.dart';
 import '../../../../domain/entities/user_entity.dart';
 import '../profile/about_app_page.dart';
+import '../profile/delete_account_page.dart';
 import '../profile/edit_profile_page.dart';
 import '../profile/help_faq_page.dart';
 import '../profile/my_orders_page.dart';
@@ -60,7 +62,7 @@ class ProfileTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Instant Help via Agora', style: AppTextStyles.titleMedium),
+                  Text('Get Instant Call Support', style: AppTextStyles.titleMedium),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -79,7 +81,7 @@ class ProfileTab extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: OutlineGoldButton(
-                          label: 'Video Sales',
+                          label: 'Video Support',
                           onTap: () => _startSupportCall(
                             context,
                             callType: 'video',
@@ -277,6 +279,15 @@ class ProfileTab extends StatelessWidget {
         'About App',
         AppColors.textMuted,
         () => _openPage(context, const AboutAppPage()),
+      ),
+      _MenuItem(
+        Icons.person_remove_outlined,
+        'Delete Account',
+        AppColors.error,
+        () => _openPage(
+          context,
+          const DeleteAccountPage(url: AppConstants.deleteAccountUrl),
+        ),
       ),
     ];
     return Padding(

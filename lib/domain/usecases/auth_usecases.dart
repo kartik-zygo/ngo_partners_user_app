@@ -49,6 +49,14 @@ class LogoutUseCase {
   Future<void> call() => _repository.logout();
 }
 
+class DeleteAccountUseCase {
+  final AuthRepository _repository;
+  DeleteAccountUseCase(this._repository);
+
+  Future<String> call({required String password, String? reason}) =>
+      _repository.deleteAccount(password: password, reason: reason);
+}
+
 class GetCurrentUserUseCase {
   final AuthRepository _repository;
   GetCurrentUserUseCase(this._repository);

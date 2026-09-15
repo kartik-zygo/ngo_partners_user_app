@@ -102,6 +102,36 @@ class RemoteDataSource {
     await _client.clearTokens();
   }
 
+  /// `DELETE /auth/me`. The server re-checks [password], removes the account
+  /// and revokes every session. Returns its confirmation message.
+  Future<String> deleteAccount({
+    required String password,
+    String? reason,
+  }) async {
+    try {
+      final res = await _dio.delete('/auth/me', data: {
+        'password': password,
+        'confirm': 'DELETE',
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      });
+      _client.stopRefreshTimer();
+      await _client.clearTokens();
+      final data = res.data['data'];
+      return data is Map ? (data['message'] ?? '').toString() : '';
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == null) {
+        throw Exception(
+          'Could not reach the server. Check your connection and try again.',
+        );
+      }
+      if (status == 401) {
+        throw Exception('Incorrect password. Please check it and try again.');
+      }
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
   Future<UserEntity> updateProfile({
     String? firstName,
     String? lastName,

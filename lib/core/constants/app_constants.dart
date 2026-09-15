@@ -33,6 +33,11 @@ class AppConstants {
   /// Base for server-hosted files (`<uploadsBaseUrl>/<file>`).
   static String get uploadsBaseUrl => '$socketUrl$_pathPrefix/uploads';
 
+  /// Public account-deletion page, opened in-app from Profile
+  /// (App Store guideline 5.1.1(v)).
+  static const String deleteAccountUrl =
+      'https://www.zygonich.com/ngo-partner/delete-account';
+
   static const String tokenKey = 'accessToken';
   static const String refreshTokenKey = 'refreshToken';
   static const String userIdKey = 'userId';

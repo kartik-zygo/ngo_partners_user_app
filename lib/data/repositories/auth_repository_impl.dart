@@ -48,6 +48,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() => _remote.logout();
 
   @override
+  Future<String> deleteAccount({required String password, String? reason}) =>
+      _remote.deleteAccount(password: password, reason: reason);
+
+  @override
   Future<UserEntity?> getCurrentUser() async {
     // Check if we have a stored token; if so restore session via GET /auth/me
     final token = await _client.getAccessToken();

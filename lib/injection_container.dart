@@ -33,6 +33,7 @@ void setupInjection() {
   sl.registerFactory(() => LoginUseCase(sl()));
   sl.registerFactory(() => RegisterUseCase(sl()));
   sl.registerFactory(() => LogoutUseCase(sl()));
+  sl.registerFactory(() => DeleteAccountUseCase(sl()));
   sl.registerFactory(() => GetCurrentUserUseCase(sl()));
   sl.registerFactory(() => UpdateProfileUseCase(sl()));
 

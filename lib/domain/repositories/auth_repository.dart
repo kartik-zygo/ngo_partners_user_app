@@ -19,6 +19,10 @@ abstract class AuthRepository {
 
   Future<void> logout();
 
+  /// Permanently deletes the signed-in account and returns the server's
+  /// confirmation message.
+  Future<String> deleteAccount({required String password, String? reason});
+
   Future<UserEntity?> getCurrentUser();
 
   Future<UserEntity> updateProfile({

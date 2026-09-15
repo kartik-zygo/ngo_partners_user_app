@@ -147,7 +147,13 @@ class DioClient {
     }
     debugPrint('└─────────────────────────────────────────────────');
 
-    if (error.response?.statusCode != 401) {
+    // Account deletion answers a wrong password with 401 as well. A refresh
+    // cannot fix that, and retrying would loop refresh → 401 indefinitely.
+    final request = error.requestOptions;
+    final isPasswordCheck =
+        request.path.endsWith('/auth/me') && request.method == 'DELETE';
+
+    if (error.response?.statusCode != 401 || isPasswordCheck) {
       handler.next(error);
       return;
     }

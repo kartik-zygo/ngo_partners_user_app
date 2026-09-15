@@ -66,6 +66,16 @@ class _AgoraCallPageState extends State<AgoraCallPage> {
   StreamSubscription<bool>? _connSub;
 
   bool get _isVideo => widget.callType == 'video';
+
+  /// Errors after which this call can never connect.
+  static const _fatalAgoraErrors = {
+    ErrorCodeType.errInvalidAppId,
+    ErrorCodeType.errInvalidChannelName,
+    ErrorCodeType.errInvalidToken,
+    ErrorCodeType.errTokenExpired,
+    ErrorCodeType.errJoinChannelRejected,
+    ErrorCodeType.errInvalidUserId,
+  };
   bool get _isActive => _remoteUid != null && _engineReady;
   bool get _showLocalPreview =>
       (_previewInitialized || _engineReady) && _cameraOn && _engine != null;
@@ -199,6 +209,10 @@ class _AgoraCallPageState extends State<AgoraCallPage> {
         _doEndCall();
       },
       onError: (errCode, msg) {
+        // The SDK also reports recoverable conditions here (audio route
+        // changes, brief network loss). Treating those as fatal replaced a
+        // live call with the error screen.
+        if (!_fatalAgoraErrors.contains(errCode)) return;
         if (mounted) setState(() => _error = 'Agora error: $msg ($errCode)');
       },
     );
