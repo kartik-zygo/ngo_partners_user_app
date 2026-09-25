@@ -39,3 +39,8 @@ class CommunitySearchChanged extends CommunityEvent {
 class CommunityLoadMore extends CommunityEvent {
   const CommunityLoadMore();
 }
+
+/// The user blocked or unblocked someone, or reported a post.
+class CommunitySafetyChanged extends CommunityEvent {
+  const CommunitySafetyChanged();
+}

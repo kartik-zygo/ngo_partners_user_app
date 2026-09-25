@@ -4,11 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/widgets/common_widgets.dart';
+import '../../../data/datasources/community_safety_store.dart';
 import '../../../domain/entities/community_entity.dart';
 import '../../../domain/entities/user_entity.dart';
 import '../../../injection_container.dart';
 import '../../blocs/community/community_bloc.dart';
+import '../legal/terms_of_use_page.dart';
 import 'ask_question_page.dart';
+import 'blocked_members_page.dart';
+import 'community_moderation.dart';
 import 'community_post_detail_page.dart';
 import 'community_widgets.dart';
 
@@ -20,7 +24,10 @@ class CommunityTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<CommunityBloc>(
-      create: (_) => sl<CommunityBloc>()..add(const CommunityFeedRequested()),
+      create: (_) {
+        sl<CommunitySafetyStore>().load(user.id);
+        return sl<CommunityBloc>()..add(const CommunityFeedRequested());
+      },
       child: _CommunityView(user: user),
     );
   }
@@ -163,6 +170,7 @@ class _CommunityViewState extends State<_CommunityView> {
                   ],
                 ),
               ),
+              _buildSafetyMenu(),
             ],
           ),
           const SizedBox(height: 14),
@@ -201,6 +209,39 @@ class _CommunityViewState extends State<_CommunityView> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSafetyMenu() {
+    return PopupMenuButton<String>(
+      tooltip: 'Community safety',
+      icon: const Icon(Icons.shield_outlined, color: AppColors.textSecondary),
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      onSelected: (value) {
+        final page = value == 'blocked'
+            ? BlockedMembersPage(userId: widget.user.id)
+            : const TermsOfUsePage();
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+      },
+      itemBuilder: (_) => [
+        _menuItem('blocked', Icons.block_rounded, 'Blocked members'),
+        _menuItem('terms', Icons.gavel_rounded, 'Community rules & Terms'),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.textSecondary),
+          const SizedBox(width: 10),
+          Text(label, style: AppTextStyles.bodyLarge),
         ],
       ),
     );
@@ -365,7 +406,16 @@ class _CommunityViewState extends State<_CommunityView> {
         delegate: SliverChildBuilderDelegate(
           (context, i) => Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: _PostCard(post: state.posts[i], onTap: () => _openPost(state.posts[i])),
+            child: _PostCard(
+              post: state.posts[i],
+              onTap: () => _openPost(state.posts[i]),
+              onMore: state.posts[i].author.id == widget.user.id
+                  ? null
+                  : () => showCommunityContentActions(
+                        context,
+                        target: CommunityReportTarget.post(state.posts[i]),
+                      ),
+            ),
           ),
           childCount: state.posts.length,
         ),
@@ -378,7 +428,11 @@ class _CommunityViewState extends State<_CommunityView> {
 class _PostCard extends StatelessWidget {
   final CommunityPost post;
   final VoidCallback onTap;
-  const _PostCard({required this.post, required this.onTap});
+
+  /// Opens Report / Block. Null on the user's own posts.
+  final VoidCallback? onMore;
+
+  const _PostCard({required this.post, required this.onTap, this.onMore});
 
   @override
   Widget build(BuildContext context) {
@@ -406,6 +460,7 @@ class _PostCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Icon(Icons.verified_rounded, size: 18, color: AppColors.success),
               ],
+              if (onMore != null) CommunityMoreButton(onTap: onMore!),
             ],
           ),
           const SizedBox(height: 6),

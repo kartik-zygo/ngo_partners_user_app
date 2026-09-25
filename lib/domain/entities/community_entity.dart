@@ -220,6 +220,93 @@ class CommunityVoteResult extends Equatable {
   List<Object?> get props => [targetId, voteScore, myVote];
 }
 
+/// Why a member flagged a post or answer. The enum [name] is the API value
+/// (`POST /community/reports`); [label] is what the member reads.
+enum CommunityReportReason {
+  spam('Spam or advertising', 'Promotions, repeated posts or unrelated links'),
+  harassment('Harassment or bullying', 'Insults, threats or targeting a person'),
+  hate('Hate speech', 'Attacks on religion, caste, gender, disability or identity'),
+  sexual('Sexual or explicit content', 'Nudity, pornography or sexual remarks'),
+  violence('Violence or self-harm', 'Threats, graphic content or encouraging harm'),
+  scam('Scam or misleading', 'Fraudulent fundraising, fake claims or phishing'),
+  other('Something else', 'Any other content that breaks the Community rules');
+
+  final String label;
+  final String description;
+  const CommunityReportReason(this.label, this.description);
+}
+
+/// A post or answer that a member can report, or whose author they can block.
+class CommunityReportTarget extends Equatable {
+  final String type; // 'post' | 'answer'
+  final String id;
+  final String postId;
+  final CommunityAuthor author;
+
+  const CommunityReportTarget({
+    required this.type,
+    required this.id,
+    required this.postId,
+    required this.author,
+  });
+
+  factory CommunityReportTarget.post(CommunityPost post) {
+    return CommunityReportTarget(
+      type: 'post',
+      id: post.id,
+      postId: post.id,
+      author: post.author,
+    );
+  }
+
+  factory CommunityReportTarget.answer(CommunityAnswer answer,
+      {required String postId}) {
+    return CommunityReportTarget(
+      type: 'answer',
+      id: answer.id,
+      postId: postId,
+      author: answer.author,
+    );
+  }
+
+  bool get isPost => type == 'post';
+
+  @override
+  List<Object?> get props => [type, id, postId];
+}
+
+/// A member the signed-in user has blocked (`GET /community/blocks`).
+class BlockedCommunityMember extends Equatable {
+  final String id;
+  final String name;
+  final DateTime blockedAt;
+
+  const BlockedCommunityMember({
+    required this.id,
+    required this.name,
+    required this.blockedAt,
+  });
+
+  /// Reads both the API shape (`userId`) and the on-device cache (`id`).
+  factory BlockedCommunityMember.fromJson(Map<String, dynamic> json) {
+    return BlockedCommunityMember(
+      id: (json['userId'] ?? json['id']) as String? ?? '',
+      name: json['name'] as String? ?? 'NGO Member',
+      blockedAt: DateTime.tryParse(json['blockedAt'] as String? ?? '') ??
+          DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'blockedAt': blockedAt.toIso8601String(),
+      };
+
+  @override
+  List<Object?> get props => [id, name, blockedAt];
+}
+
 class CommunityTag extends Equatable {
   final String tag;
   final int count;

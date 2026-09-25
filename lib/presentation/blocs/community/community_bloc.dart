@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../data/datasources/community_safety_store.dart';
 import '../../../domain/entities/community_entity.dart';
 import '../../../domain/usecases/app_usecases.dart';
 
@@ -9,15 +10,25 @@ part 'community_state.dart';
 
 /// Drives the community feed: sort tabs, tag filter, search, and pagination.
 /// The post-detail screen manages its own state via use cases directly.
+///
+/// Posts from blocked members, posts the user reported and posts the content
+/// filter flags never reach [CommunityState.posts]. The unfiltered pages are
+/// kept in [_loaded], so a block or unblock re-filters at once without a
+/// network round trip.
 class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   final GetCommunityPostsUseCase _getPosts;
   final GetCommunityTagsUseCase _getTags;
+  final CommunitySafetyStore _safety;
+
+  List<CommunityPost> _loaded = const [];
 
   CommunityBloc({
     required GetCommunityPostsUseCase getPosts,
     required GetCommunityTagsUseCase getTags,
+    required CommunitySafetyStore safety,
   })  : _getPosts = getPosts,
         _getTags = getTags,
+        _safety = safety,
         super(const CommunityState()) {
     on<CommunityFeedRequested>(_onFeedRequested);
     on<CommunitySortChanged>(_onSortChanged);
@@ -25,6 +36,19 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     on<CommunitySearchChanged>(_onSearchChanged);
     on<CommunityLoadMore>(_onLoadMore);
     on<CommunityRefreshed>(_onRefreshed);
+    on<CommunitySafetyChanged>(_onSafetyChanged);
+    _safety.addListener(_safetyListener);
+  }
+
+  void _safetyListener() => add(const CommunitySafetyChanged());
+
+  List<CommunityPost> get _visible =>
+      _loaded.where(_safety.allowsPost).toList();
+
+  @override
+  Future<void> close() {
+    _safety.removeListener(_safetyListener);
+    return super.close();
   }
 
   Future<void> _load(Emitter<CommunityState> emit, {required bool reset}) async {
@@ -33,6 +57,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     }
     try {
       final page = reset ? 1 : state.page + 1;
+      await _safety.ready;
       final feed = await _getPosts(
         page: page,
         sort: state.sort,
@@ -46,10 +71,10 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           tags = await _getTags();
         } catch (_) {}
       }
-      final posts = reset ? feed.posts : [...state.posts, ...feed.posts];
+      _loaded = reset ? feed.posts : [..._loaded, ...feed.posts];
       emit(state.copyWith(
         status: CommunityStatus.success,
-        posts: posts,
+        posts: _visible,
         tags: tags,
         page: feed.page,
         hasNext: feed.hasNext,
@@ -92,6 +117,12 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       CommunitySearchChanged event, Emitter<CommunityState> emit) async {
     emit(state.copyWith(search: event.query));
     await _load(emit, reset: true);
+  }
+
+  void _onSafetyChanged(
+      CommunitySafetyChanged event, Emitter<CommunityState> emit) {
+    if (state.status != CommunityStatus.success) return;
+    emit(state.copyWith(posts: _visible));
   }
 
   Future<void> _onLoadMore(

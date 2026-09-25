@@ -234,6 +234,39 @@ class VoteControl extends StatelessWidget {
   }
 }
 
+// ── "•••" button that opens Report / Block ─────────────────────────────────────
+class CommunityMoreButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final AlignmentGeometry alignment;
+
+  const CommunityMoreButton({
+    super.key,
+    required this.onTap,
+    this.alignment = Alignment.topRight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Report or block',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: 40,
+          height: 30,
+          child: Align(
+            alignment: alignment,
+            child: const Icon(Icons.more_horiz_rounded,
+                size: 22, color: AppColors.textMuted),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Small stat (icon + value) ───────────────────────────────────────────────────
 class CommunityStat extends StatelessWidget {
   final IconData icon;

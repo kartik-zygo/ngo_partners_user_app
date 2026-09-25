@@ -857,6 +857,65 @@ class RemoteDataSource {
     }
   }
 
+  /// Files a report with the moderation team (App Store guideline 1.2). With
+  /// [blockAuthor], the server also blocks the author for this user.
+  Future<void> reportCommunityContent({
+    required CommunityReportTarget target,
+    required CommunityReportReason reason,
+    String? details,
+    bool blockAuthor = false,
+  }) async {
+    try {
+      await _dio.post('/community/reports', data: {
+        'targetType': target.type,
+        'targetId': target.id,
+        'reason': reason.name,
+        if (details != null && details.trim().isNotEmpty)
+          'details': details.trim(),
+        'blockAuthor': blockAuthor,
+      });
+    } on DioException catch (e) {
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
+  Future<List<BlockedCommunityMember>> getBlockedCommunityMembers() async {
+    try {
+      final res = await _dio.get('/community/blocks');
+      return (res.data['data'] as List<dynamic>)
+          .map((e) =>
+              BlockedCommunityMember.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
+  /// Blocks [userId]. [target] is the post or answer that prompted the block;
+  /// the server forwards it to the moderation team.
+  Future<void> blockCommunityMember(
+    String userId, {
+    CommunityReportTarget? target,
+  }) async {
+    try {
+      await _dio.post('/community/blocks', data: {
+        'userId': userId,
+        if (target != null) 'targetType': target.type,
+        if (target != null) 'targetId': target.id,
+      });
+    } on DioException catch (e) {
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
+  Future<void> unblockCommunityMember(String userId) async {
+    try {
+      await _dio.delete('/community/blocks/$userId');
+    } on DioException catch (e) {
+      throw Exception(_client.extractErrorMessage(e));
+    }
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   Future<void> _saveAuthData(Map<String, dynamic> data) async {

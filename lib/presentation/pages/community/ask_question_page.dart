@@ -3,9 +3,11 @@ import 'package:get_it/get_it.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/moderation/content_filter.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../../domain/entities/community_entity.dart';
 import '../../../domain/usecases/app_usecases.dart';
+import '../legal/terms_of_use_page.dart';
 import 'community_widgets.dart';
 
 /// Compose a new community question or discussion. Pops the created
@@ -55,6 +57,12 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
 
   Future<void> _submit() async {
     if (!_valid || _submitting) return;
+    if (ContentFilter.anyObjectionable(
+        [_titleCtrl.text, _bodyCtrl.text, ..._tags])) {
+      _showError('Your post contains language that is not allowed in the '
+          'Community. Please edit it and try again.');
+      return;
+    }
     setState(() => _submitting = true);
     try {
       final post = await _create(
@@ -68,12 +76,16 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString().replaceFirst('Exception: ', '')),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-      ));
+      _showError(e.toString().replaceFirst('Exception: ', ''));
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: AppColors.error,
+      behavior: SnackBarBehavior.floating,
+    ));
   }
 
   @override
@@ -175,6 +187,8 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
                 .map((t) => CommunityTagChip(tag: t, onTap: () => _addTag(t)))
                 .toList(),
           ),
+          const SizedBox(height: 20),
+          _buildRulesNotice(),
         ],
       ),
       bottomSheet: Wrap(
@@ -226,6 +240,51 @@ class _AskQuestionPageState extends State<AskQuestionPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRulesNotice() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: CommunityTheme.accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CommunityTheme.accent.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.shield_outlined,
+              size: 18, color: CommunityTheme.accent),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Keep it respectful. Abusive or objectionable posts are '
+                  'removed, and their authors are removed from the Community.',
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const TermsOfUsePage())),
+                  child: Text(
+                    'Read the Community rules',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: CommunityTheme.accent,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

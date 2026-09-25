@@ -53,4 +53,7 @@ class AppConstants {
     defaultValue: 'sales@ngopartners.in',
   );
   static const String salesAvailability = 'Mon–Sat, 9AM–7PM';
+
+  /// Contact named in the Terms of Use for legal and moderation questions.
+  static const String supportEmail = 'support@zygonich.com';
 }

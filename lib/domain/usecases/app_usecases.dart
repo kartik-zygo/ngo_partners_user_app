@@ -339,6 +339,23 @@ class DeleteCommunityAnswerUseCase {
   Future<void> call(String answerId) => _repo.deleteCommunityAnswer(answerId);
 }
 
+class ReportCommunityContentUseCase {
+  final AppRepository _repo;
+  ReportCommunityContentUseCase(this._repo);
+  Future<void> call({
+    required CommunityReportTarget target,
+    required CommunityReportReason reason,
+    String? details,
+    bool blockAuthor = false,
+  }) =>
+      _repo.reportCommunityContent(
+        target: target,
+        reason: reason,
+        details: details,
+        blockAuthor: blockAuthor,
+      );
+}
+
 class GetCommunityTagsUseCase {
   final AppRepository _repo;
   GetCommunityTagsUseCase(this._repo);

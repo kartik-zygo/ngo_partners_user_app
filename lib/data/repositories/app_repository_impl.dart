@@ -271,4 +271,18 @@ class AppRepositoryImpl implements AppRepository {
 
   @override
   Future<List<CommunityTag>> getCommunityTags() => _remote.getCommunityTags();
+
+  @override
+  Future<void> reportCommunityContent({
+    required CommunityReportTarget target,
+    required CommunityReportReason reason,
+    String? details,
+    bool blockAuthor = false,
+  }) =>
+      _remote.reportCommunityContent(
+        target: target,
+        reason: reason,
+        details: details,
+        blockAuthor: blockAuthor,
+      );
 }

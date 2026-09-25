@@ -126,4 +126,10 @@ abstract class AppRepository {
   Future<void> deleteCommunityPost(String postId);
   Future<void> deleteCommunityAnswer(String answerId);
   Future<List<CommunityTag>> getCommunityTags();
+  Future<void> reportCommunityContent({
+    required CommunityReportTarget target,
+    required CommunityReportReason reason,
+    String? details,
+    bool blockAuthor,
+  });
 }

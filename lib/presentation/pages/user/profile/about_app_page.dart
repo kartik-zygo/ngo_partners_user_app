@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
+import '../../legal/terms_of_use_page.dart';
 
 class AboutAppPage extends StatelessWidget {
   const AboutAppPage({super.key});
@@ -84,7 +85,18 @@ class AboutAppPage extends StatelessWidget {
               children: [
                 Text('Legal', style: AppTextStyles.headlineSmall),
                 const SizedBox(height: 8),
-                Text('Terms of Service', style: AppTextStyles.bodyMedium),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const TermsOfUsePage())),
+                  child: Text(
+                    'Terms of Use (EULA)',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Text('Privacy Policy', style: AppTextStyles.bodyMedium),
                 const SizedBox(height: 6),

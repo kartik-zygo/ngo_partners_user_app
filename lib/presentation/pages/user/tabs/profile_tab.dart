@@ -19,6 +19,8 @@ import '../profile/security_privacy_page.dart';
 import '../../../blocs/app/app_blocs.dart';
 import '../../../blocs/auth/auth_bloc.dart';
 import '../../../blocs/auth/auth_event.dart';
+import '../../community/blocked_members_page.dart';
+import '../../legal/terms_of_use_page.dart';
 import '../../support/agora_call_page.dart';
 import '../../support/ticket_detail_page.dart';
 
@@ -273,6 +275,18 @@ class ProfileTab extends StatelessWidget {
         'Help & FAQ',
         AppColors.success,
         () => _openPage(context, const HelpFaqPage()),
+      ),
+      _MenuItem(
+        Icons.block_rounded,
+        'Blocked Members',
+        AppColors.textSecondary,
+        () => _openPage(context, BlockedMembersPage(userId: user.id)),
+      ),
+      _MenuItem(
+        Icons.gavel_rounded,
+        'Terms of Use',
+        AppColors.primary,
+        () => _openPage(context, const TermsOfUsePage()),
       ),
       _MenuItem(
         Icons.info_outline_rounded,

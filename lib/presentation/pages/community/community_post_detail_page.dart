@@ -3,13 +3,18 @@ import 'package:get_it/get_it.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/moderation/content_filter.dart';
 import '../../../core/widgets/common_widgets.dart';
+import '../../../data/datasources/community_safety_store.dart';
 import '../../../domain/entities/community_entity.dart';
 import '../../../domain/usecases/app_usecases.dart';
+import 'community_moderation.dart';
 import 'community_widgets.dart';
 
 /// Full question/discussion thread: vote on the post and answers, read the
 /// accepted solution, post an answer, and (as the author) accept an answer.
+/// Other members' posts and answers can be reported, and their authors
+/// blocked; answers from blocked members are not shown.
 class CommunityPostDetailPage extends StatefulWidget {
   final CommunityPost post;
   final String currentUserId;
@@ -31,6 +36,7 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
   final _voteAnswer = GetIt.instance<VoteCommunityAnswerUseCase>();
   final _addAnswer = GetIt.instance<AddCommunityAnswerUseCase>();
   final _accept = GetIt.instance<AcceptCommunityAnswerUseCase>();
+  final _safety = GetIt.instance<CommunitySafetyStore>();
 
   final _answerCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
@@ -47,14 +53,28 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
   void initState() {
     super.initState();
     _post = widget.post;
+    _safety.addListener(_onSafetyChanged);
     _load();
   }
 
   @override
   void dispose() {
+    _safety.removeListener(_onSafetyChanged);
     _answerCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  void _onSafetyChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Report / Block for the post or one of its answers. Leaves the thread
+  /// when the post itself is no longer shown (reported, or author blocked).
+  Future<void> _openActions(CommunityReportTarget target) async {
+    await showCommunityContentActions(context, target: target);
+    if (!mounted) return;
+    if (!_safety.allowsPost(_post)) Navigator.of(context).pop(true);
   }
 
   Future<void> _load() async {
@@ -119,6 +139,11 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
   Future<void> _submitAnswer() async {
     final text = _answerCtrl.text.trim();
     if (text.length < 2 || _posting) return;
+    if (ContentFilter.isObjectionable(text)) {
+      _snack('Your reply contains language that is not allowed in the '
+          'Community. Please edit it and try again.');
+      return;
+    }
     FocusScope.of(context).unfocus();
     setState(() => _posting = true);
     try {
@@ -181,6 +206,15 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
           surfaceTintColor: Colors.transparent,
           title: Text(_post.isQuestion ? 'Question' : 'Discussion',
               style: AppTextStyles.headlineSmall),
+          actions: [
+            if (!_isAuthor)
+              IconButton(
+                tooltip: 'Report or block',
+                icon: const Icon(Icons.more_vert_rounded),
+                onPressed: () =>
+                    _openActions(CommunityReportTarget.post(_post)),
+              ),
+          ],
         ),
         body: Column(
           children: [
@@ -223,7 +257,8 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
       );
     }
 
-    final answers = _post.answers;
+    final answers = _post.answers.where(_safety.allowsAnswer).toList();
+    final hiddenCount = _post.answers.length - answers.length;
     return RefreshIndicator(
       color: CommunityTheme.accent,
       onRefresh: _load,
@@ -260,6 +295,15 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
                 ),
             ],
           ),
+          if (hiddenCount > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '$hiddenCount hidden: from members you blocked, reported by '
+                'you, or flagged by the content filter.',
+                style: AppTextStyles.caption,
+              ),
+            ),
           const SizedBox(height: 12),
           if (answers.isEmpty)
             _emptyAnswers()
@@ -391,9 +435,21 @@ class _CommunityPostDetailPageState extends State<CommunityPostDetailPage> {
               ],
             ),
             const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: AuthorBadge(author: ans.author, time: ans.createdAt),
+            Row(
+              children: [
+                if (ans.author.id != widget.currentUserId)
+                  CommunityMoreButton(
+                    alignment: Alignment.centerLeft,
+                    onTap: () => _openActions(
+                        CommunityReportTarget.answer(ans, postId: _post.id)),
+                  ),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: AuthorBadge(author: ans.author, time: ans.createdAt),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

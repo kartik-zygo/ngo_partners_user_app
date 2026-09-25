@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'core/network/dio_client.dart';
 import 'core/services/socket_service.dart';
+import 'data/datasources/community_safety_store.dart';
 import 'data/datasources/remote_data_source.dart';
 import 'data/repositories/app_repository_impl.dart';
 import 'data/repositories/auth_repository_impl.dart';
@@ -23,6 +24,8 @@ void setupInjection() {
 
   // ── Data sources ──────────────────────────────────────────────────────────
   sl.registerLazySingleton<RemoteDataSource>(() => RemoteDataSource(sl()));
+  sl.registerLazySingleton<CommunitySafetyStore>(
+      () => CommunitySafetyStore(sl()));
 
   // ── Repositories ──────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthRepository>(
@@ -73,6 +76,7 @@ void setupInjection() {
   sl.registerFactory(() => DeleteCommunityPostUseCase(sl()));
   sl.registerFactory(() => DeleteCommunityAnswerUseCase(sl()));
   sl.registerFactory(() => GetCommunityTagsUseCase(sl()));
+  sl.registerFactory(() => ReportCommunityContentUseCase(sl()));
 
   // ── BLoCs ─────────────────────────────────────────────────────────────────
   sl.registerFactory(
@@ -122,6 +126,7 @@ void setupInjection() {
     () => CommunityBloc(
       getPosts: sl(),
       getTags: sl(),
+      safety: sl(),
     ),
   );
 }

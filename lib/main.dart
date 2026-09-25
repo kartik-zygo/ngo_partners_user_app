@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants/app_constants.dart';
 import 'core/network/dio_client.dart';
 import 'core/services/socket_service.dart';
+import 'core/services/terms_consent.dart';
 import 'core/theme/app_theme.dart';
 import 'injection_container.dart';
 import 'presentation/blocs/app/app_blocs.dart';
@@ -12,6 +13,7 @@ import 'presentation/blocs/auth/auth_bloc.dart';
 import 'presentation/blocs/auth/auth_event.dart';
 import 'presentation/blocs/auth/auth_state.dart';
 import 'presentation/blocs/services/services_bloc.dart';
+import 'presentation/pages/legal/terms_of_use_page.dart';
 import 'presentation/pages/login/login_screen.dart';
 import 'presentation/pages/onboarding/onboarding_screen.dart';
 import 'presentation/pages/splash/splash_screen.dart';
@@ -29,6 +31,7 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final onboardingDone = prefs.getBool(AppConstants.onboardingDoneKey) ?? false;
+  await TermsConsent.load();
 
   runApp(NgoPartnersApp(onboardingDone: onboardingDone));
 }
@@ -133,6 +136,17 @@ class _AppNavigatorState extends State<_AppNavigator> {
           );
         }
         if (state is AuthAuthenticated) {
+          // Sessions restored from a build without the terms screen have
+          // never agreed; they must before reaching the app.
+          if (!TermsConsent.accepted) {
+            return TermsOfUsePage.gate(
+              onAgree: () async {
+                await TermsConsent.accept();
+                if (mounted) setState(() {});
+              },
+              onDecline: () => ctx.read<AuthBloc>().add(AuthLogoutRequested()),
+            );
+          }
           return UserDashboard(user: state.user);
         }
         return const LoginScreen();

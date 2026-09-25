@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/terms_consent.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
+import '../legal/terms_consent_checkbox.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -26,6 +28,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
   bool _obscurePass = true;
   bool _isOrgAccount = false;
+  bool _agreedToTerms = TermsConsent.accepted;
+  bool _showTermsError = false;
 
   @override
   void dispose() {
@@ -49,6 +53,11 @@ class _SignUpPageState extends State<SignUpPage> {
       );
       return;
     }
+    if (!_agreedToTerms) {
+      setState(() => _showTermsError = true);
+      return;
+    }
+    TermsConsent.accept();
     context.read<AuthBloc>().add(
           AuthRegisterRequested(
             email: _emailCtrl.text.trim(),
@@ -315,7 +324,16 @@ class _SignUpPageState extends State<SignUpPage> {
                                 icon: Icons.numbers_outlined,
                               ),
                             ],
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 22),
+                            TermsConsentCheckbox(
+                              value: _agreedToTerms,
+                              showError: _showTermsError,
+                              onChanged: (v) => setState(() {
+                                _agreedToTerms = v;
+                                if (v) _showTermsError = false;
+                              }),
+                            ),
+                            const SizedBox(height: 22),
                             GoldButton(
                               label: 'Create Account',
                               icon: Icons.person_add_rounded,

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/terms_consent.dart';
 import '../../../core/widgets/common_widgets.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../blocs/auth/auth_event.dart';
 import '../../blocs/auth/auth_state.dart';
 import '../auth/sign_up_page.dart';
+import '../legal/terms_consent_checkbox.dart';
 
 // ── Login Screen ──────────────────────────────────────────────────────────────
 class LoginScreen extends StatefulWidget {
@@ -22,6 +24,8 @@ class _LoginScreenState extends State<LoginScreen>
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _obscurePass = true;
+  bool _agreedToTerms = TermsConsent.accepted;
+  bool _showTermsError = false;
   late AnimationController _shakeCtrl;
   late Animation<double> _shakeAnim;
 
@@ -49,6 +53,12 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _login(BuildContext ctx) {
+    if (!_agreedToTerms) {
+      setState(() => _showTermsError = true);
+      _triggerShake();
+      return;
+    }
+    TermsConsent.accept();
     context.read<AuthBloc>().add(
           AuthLoginRequested(
             email: _emailCtrl.text.trim(),
@@ -266,7 +276,16 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 22),
+                              const SizedBox(height: 18),
+                              TermsConsentCheckbox(
+                                value: _agreedToTerms,
+                                showError: _showTermsError,
+                                onChanged: (v) => setState(() {
+                                  _agreedToTerms = v;
+                                  if (v) _showTermsError = false;
+                                }),
+                              ),
+                              const SizedBox(height: 18),
                               GoldButton(
                                 label: 'Sign In',
                                 onTap: isLoading ? null : () => _login(ctx),
